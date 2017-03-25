@@ -5,7 +5,6 @@ import java.io.StringReader;
 import java.net.InetAddress;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 
@@ -15,15 +14,16 @@ import org.apache.curator.framework.recipes.cache.NodeCache;
 import org.apache.curator.framework.recipes.cache.NodeCacheListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.slf4j.MDC;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
 
+import com.google.common.base.Optional;
 import com.netflix.loadbalancer.ILoadBalancer;
 import com.netflix.loadbalancer.Server;
 import com.netflix.loadbalancer.ZoneAvoidanceRule;
+
+import io.github.agileluo.smartroute.constant.SmartRuleConstant;
 
 /**
  * 
@@ -44,7 +44,7 @@ import com.netflix.loadbalancer.ZoneAvoidanceRule;
  * 动态规则：
  * <p>
  * 1，路由规则
- * (type:[ab|gray|test|debug]).(typeInfo:[{pubVersion}|{ip}])=(services:({serviceId}:{serviceIp},)+)
+ * (type:[ab|gray|test|debug]).(typeInfo:[{pubVersion}|{ip}|{clientId}])=(services:({serviceId}:{serviceIp},)+)
  * <= (clients:<= [user|ip]:[{userId}|{clientIp}])?<br> 2， ab切换：
  * switch.ab.{pubVersion}=[a|b]
  * <p>
@@ -104,21 +104,20 @@ public class SmartRule extends ZoneAvoidanceRule implements InitializingBean {
 	private Set<String> localHosts = new HashSet<>();
 	private NodeCache cache;
 	private Properties p;
-	
+
 	@Override
 	public Server choose(Object key) {
+		ILoadBalancer lb = getLoadBalancer();
 		// 开发调试支持
 		String debugHost = p.getProperty("debugHost");
-		if(debugHost != null){
-			ILoadBalancer lb = getLoadBalancer();
+		if (debugHost != null) {
 			List<Server> servers = lb.getAllServers();
 			for (Server s : servers) {
 				if (debugHost.equals(s.getHost())) {
 					return s;
 				}
 			}
-		}else if (debugLocal) {
-			ILoadBalancer lb = getLoadBalancer();
+		} else if (debugLocal) {
 			List<Server> servers = lb.getAllServers();
 			for (Server s : servers) {
 				if (localHosts.contains(s.getHost())) {
@@ -126,9 +125,15 @@ public class SmartRule extends ZoneAvoidanceRule implements InitializingBean {
 				}
 			}
 		} else {
-			// A/B测试支持，灰度支持
+			//debug test ab gray
 		}
-		return super.choose(key);
+		//默认行为
+		Optional<Server> server = getPredicate().chooseRoundRobinAfterFiltering(lb.getAllServers(), key);
+		if (server.isPresent()) {
+			return server.get();
+		} else {
+			return null;
+		}
 	}
 
 	@Override
@@ -144,7 +149,7 @@ public class SmartRule extends ZoneAvoidanceRule implements InitializingBean {
 				}
 			}
 		}
-		//远程路由配置
+		// 远程路由配置
 		cache = new NodeCache(client, SmartRuleConstant.CONFIG_PATH);
 		cache.start(true);
 		p = loadRemoteProperties(cache.getCurrentData().getData());
