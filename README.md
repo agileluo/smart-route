@@ -1,2 +1,14 @@
-# smart-rule
-spring-cloud 智能路由，本地开发，本地调试，A/B测试，灰度发部
+# smart-route
+基于spring cloud的智能路由,功能如下
+
+* 本地开发支持：调用端配置debug.local=true，则优先调用本地服务 
+* 开发调试支持： 请求Header设置debugServerIp=开发机器ip， 则优先调用指定开发机器 
+* 动态规则支持： 包括A/B,灰度发布，支持ip段，指定用户等 
+* 默认规则： 支持跨中心的动态负载ZoneAvoidanceRule实现 
+
+# smart-route-starter
+项目引入此包即可使用
+
+# smart-route-starter-server
+动态规则配置服务，动态规则支持需要用到
+
