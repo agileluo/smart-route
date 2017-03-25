@@ -5,6 +5,7 @@ import java.io.StringReader;
 import java.net.InetAddress;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 
@@ -32,8 +33,10 @@ import com.netflix.loadbalancer.ZoneAvoidanceRule;
  * 提供以下功能
  * <ol>
  * <li>本地开发支持， 调用端配置debug.local=true，则优先调用本地服务</li>
- * <li>开发调试支持： 请求Header设置debugServerIp=开发机器ip， 则优先调用指定开发机器</li>
- * <li>动态支持： 包括A/B,灰度发布，支持ip段，指定用户等</li>
+ * <li>测试支持：可将请求定位至指定机器</li>
+ * <li>远程调试支持：远程调试服务， 其它请求不导流至此服务</li>
+ * <li>A/B测试</li>
+ * <li>灰度发布</li>
  * <li>默认规则： 支持跨中心的动态负载ZoneAvoidanceRule实现</li>
  * </ol>
  * <p>
@@ -78,7 +81,7 @@ import com.netflix.loadbalancer.ZoneAvoidanceRule;
  * </ol>
  * 
  * <p>
- * 路由规则优先级 debug.local=true > 请求Header配置debugServerIp > debug > test > ab > gray
+ * 路由规则优先级 debug.local=true > debug > test > ab > gray
  * 
  * <p>
  * <font color="red">其它注意事项：配置项去除后，规则自动失效，将会使用默认动态负载实现</font>
@@ -88,7 +91,6 @@ import com.netflix.loadbalancer.ZoneAvoidanceRule;
  * @version 1.0.0
  *
  */
-@Component
 public class SmartRule extends ZoneAvoidanceRule implements InitializingBean {
 
 	private static final Logger log = LoggerFactory.getLogger(SmartRule.class);
@@ -101,12 +103,13 @@ public class SmartRule extends ZoneAvoidanceRule implements InitializingBean {
 
 	private Set<String> localHosts = new HashSet<>();
 	private NodeCache cache;
-
+	private Properties p;
+	
 	@Override
 	public Server choose(Object key) {
 		// 开发调试支持
-		String debugHost = MDC.get("debugHost");
-		if (debugHost != null) {
+		String debugHost = p.getProperty("debugHost");
+		if(debugHost != null){
 			ILoadBalancer lb = getLoadBalancer();
 			List<Server> servers = lb.getAllServers();
 			for (Server s : servers) {
@@ -114,8 +117,7 @@ public class SmartRule extends ZoneAvoidanceRule implements InitializingBean {
 					return s;
 				}
 			}
-		} // 本地开发支持
-		else if (debugLocal) {
+		}else if (debugLocal) {
 			ILoadBalancer lb = getLoadBalancer();
 			List<Server> servers = lb.getAllServers();
 			for (Server s : servers) {
@@ -145,12 +147,13 @@ public class SmartRule extends ZoneAvoidanceRule implements InitializingBean {
 		//远程路由配置
 		cache = new NodeCache(client, SmartRuleConstant.CONFIG_PATH);
 		cache.start(true);
+		p = loadRemoteProperties(cache.getCurrentData().getData());
 		cache.getListenable().addListener(new NodeCacheListener() {
 			@Override
 			public void nodeChanged() throws Exception {
 				ChildData data = cache.getCurrentData();
 				log.info("路由配置信息变更，重新加载远程路由信息");
-				Properties p = loadRemoteProperties(data.getData());
+				p = loadRemoteProperties(data.getData());
 			}
 		});
 	}

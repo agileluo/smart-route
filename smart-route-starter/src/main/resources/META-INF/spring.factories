@@ -1,0 +1,3 @@
+org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
+io.github.agileluo.smartroute.autoconfigure.SmartRuleAutoConfiguration,\
+io.github.agileluo.smartroute.autoconfigure.ZkAutoConfiguration
