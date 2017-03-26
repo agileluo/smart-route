@@ -37,6 +37,7 @@ public class DebugRoute implements Route {
 	@Override
 	public void route(RouteRequest req) {
 		String requestServiceId = req.getServiceId();
+		
 		Set<String> debugHosts = debugServices.get(requestServiceId);
 		if(debugHosts == null){
 			return;

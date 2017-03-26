@@ -122,7 +122,6 @@ public class SmartRule extends ZoneAvoidanceRule implements InitializingBean {
 				}
 			}
 		} else {
-			log.info(ContextUtil.getClientIp());
 			RouteRequest req = new RouteRequest(ContextUtil.getClientId(), ContextUtil.getClientIp(),
 					lb.getAllServers());
 			servers = routeChain.route(req);
