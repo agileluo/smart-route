@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Properties;
 import java.util.Set;
 
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.recipes.cache.ChildData;
 import org.apache.curator.framework.recipes.cache.NodeCache;
@@ -24,6 +25,9 @@ import com.netflix.loadbalancer.Server;
 import com.netflix.loadbalancer.ZoneAvoidanceRule;
 
 import io.github.agileluo.smartroute.constant.SmartRuleConstant;
+import io.github.agileluo.smartroute.context.ContextUtil;
+import io.github.agileluo.smartroute.parser.RouteParserChain;
+import io.github.agileluo.smartroute.route.Route;
 
 /**
  * 
@@ -62,11 +66,11 @@ import io.github.agileluo.smartroute.constant.SmartRuleConstant;
  * userId为1234或ip为10.12.32.21的auth请求会导流到这两个节点，
  * <font color="red">其它请求不会导流至此节点</font>
  * <p>
- * 例子3：test.192.168.23.4=auth:192.168.23.5,order:192.168.23.4<br>
+ * 例子3：test.ip.192.168.23.4=auth:192.168.23.5,order:192.168.23.4<br>
  * 表示: 机器192.168.23.4处理测试模式下， auth服务只会导流至192.168.23.5,
  * order服务只会导流至192.168.23.4，其它请求规则不变
  * <p>
- * 例子4：debug.192.168.23.4=auth:192.168.23.5<br>
+ * 例子4：debug.ip.192.168.23.4=auth:192.168.23.5<br>
  * 表示: 机器192.168.23.4处理调试模式下， auth请求会导流至192.168.23.5，
  * <font color="red">其它机器auth请求不会导流至此节点</font>
  * <p>
@@ -100,6 +104,8 @@ public class SmartRule extends ZoneAvoidanceRule implements InitializingBean {
 
 	@Autowired
 	private CuratorFramework client;
+	@Autowired
+	private RouteChain routeChain;
 
 	private Set<String> localHosts = new HashSet<>();
 	private NodeCache cache;
@@ -108,27 +114,27 @@ public class SmartRule extends ZoneAvoidanceRule implements InitializingBean {
 	@Override
 	public Server choose(Object key) {
 		ILoadBalancer lb = getLoadBalancer();
+		List<Server> servers = lb.getAllServers();
 		// 开发调试支持
-		String debugHost = p.getProperty("debugHost");
-		if (debugHost != null) {
-			List<Server> servers = lb.getAllServers();
-			for (Server s : servers) {
-				if (debugHost.equals(s.getHost())) {
-					return s;
-				}
-			}
-		} else if (debugLocal) {
-			List<Server> servers = lb.getAllServers();
+		if (debugLocal) {
 			for (Server s : servers) {
 				if (localHosts.contains(s.getHost())) {
 					return s;
 				}
 			}
 		} else {
-			//debug test ab gray
+			RouteRequest req = new RouteRequest(ContextUtil.getClientId(), ContextUtil.getClientIp(),
+					lb.getAllServers());
+			servers = routeChain.route(req);
+			if (CollectionUtils.isEmpty(servers)) {
+				return null;
+			}
+			if (servers.size() == 1) {
+				return servers.get(0);
+			}
 		}
-		//默认行为
-		Optional<Server> server = getPredicate().chooseRoundRobinAfterFiltering(lb.getAllServers(), key);
+		// 默认行为
+		Optional<Server> server = getPredicate().chooseRoundRobinAfterFiltering(servers, key);
 		if (server.isPresent()) {
 			return server.get();
 		} else {
@@ -152,15 +158,23 @@ public class SmartRule extends ZoneAvoidanceRule implements InitializingBean {
 		// 远程路由配置
 		cache = new NodeCache(client, SmartRuleConstant.CONFIG_PATH);
 		cache.start(true);
-		p = loadRemoteProperties(cache.getCurrentData().getData());
+		log.info("加载远程路由信息");
+		loadRouteFromZk(cache.getCurrentData());
 		cache.getListenable().addListener(new NodeCacheListener() {
 			@Override
 			public void nodeChanged() throws Exception {
 				ChildData data = cache.getCurrentData();
 				log.info("路由配置信息变更，重新加载远程路由信息");
-				p = loadRemoteProperties(data.getData());
+				loadRouteFromZk(data);
 			}
 		});
+	}
+
+	private void loadRouteFromZk(ChildData data) throws IOException {
+		p = loadRemoteProperties(data.getData());
+		RouteParserChain rp = new RouteParserChain();
+		List<Route> routes = rp.parse(p);
+		routeChain.resetRoutes(routes);
 	}
 
 	private Properties loadRemoteProperties(byte[] data) throws IOException {
