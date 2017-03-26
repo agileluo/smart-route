@@ -23,6 +23,9 @@ public class ZkAutoConfiguration {
 			key = "zk.connect";
 		}
 		String url = env.getProperty(key);
+		if(StringUtils.isEmpty(url)){
+			throw new RuntimeException("zookeeper地址不能为空${" + key + "}");
+		}
 		CuratorFramework client = new CuratorFrameworkFactoryBean(url).getObject();
 		client.start();
 		return client;

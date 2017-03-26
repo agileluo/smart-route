@@ -20,17 +20,16 @@ import io.github.agileluo.smartroute.vo.SmartContext;
  *
  */
 public class ContextFilter implements Filter {
-
 	@Override
 	public void destroy() {
 	}
-
 	@Override
 	public void doFilter(ServletRequest req, ServletResponse resp, FilterChain chain)
 			throws IOException, ServletException {
 		HttpServletRequest request = (HttpServletRequest)req;
 		String context = request.getHeader(ContextUtil.CONTEXT);
 		if(StringUtils.isNotEmpty(context)){
+			System.out.println(context);
 			ContextUtil.initContext(context);
 		}else{
 			String clientIp = request.getRemoteHost();

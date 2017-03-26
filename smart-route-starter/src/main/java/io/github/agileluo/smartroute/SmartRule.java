@@ -17,6 +17,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.env.Environment;
 
 import com.google.common.base.Optional;
 import com.netflix.loadbalancer.ILoadBalancer;
@@ -99,23 +100,21 @@ public class SmartRule extends ZoneAvoidanceRule implements InitializingBean {
 
 	private static final Logger log = LoggerFactory.getLogger(SmartRule.class);
 
-	@Value("${debug.local}")
-	private boolean debugLocal;
-
 	@Autowired
 	private CuratorFramework client;
 	@Autowired
 	private RouteChain routeChain;
-
+	@Autowired
+	private Environment env;
+	
 	private NodeCache cache;
-	private Properties p;
 
 	@Override
 	public Server choose(Object key) {
 		ILoadBalancer lb = getLoadBalancer();
 		List<Server> servers = lb.getAllServers();
 		// 开发调试支持
-		if (debugLocal) {
+		if ("true".equals(env.getProperty("debug.local"))) {
 			for (Server s : servers) {
 				if(IpUtil.isLocalIp(s.getHost())){
 					return s;
@@ -159,7 +158,7 @@ public class SmartRule extends ZoneAvoidanceRule implements InitializingBean {
 	}
 
 	private void loadRouteFromZk(ChildData data) throws IOException {
-		p = loadRemoteProperties(data.getData());
+		Properties p = loadRemoteProperties(data.getData());
 		RouteParserChain rp = new RouteParserChain();
 		List<Route> routes = rp.parse(p);
 		routeChain.resetRoutes(routes);
