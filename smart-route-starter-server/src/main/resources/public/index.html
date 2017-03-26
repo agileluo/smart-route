@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-default/index.css">
+<script src="https://unpkg.com/vue/dist/vue.js"></script>
+<script src="https://unpkg.com/element-ui/lib/index.js"></script>
+<script type="text/javascript" src="./js/jquery-1.12.3.js"></script>
+</head>
+<body>
+	<div id="app">
+		<el-row>
+  			<el-col :span="20" :offset="2">
+  				<el-form :model="form" :rules="rules" ref="form" label-width="100px" class="demo-form">
+				  <el-form-item label="规则设置" prop="rule">
+				    <el-input type="textarea" :rows="20" v-model="form.rule"></el-input>
+				  </el-form-item>
+				  <el-form-item>
+				    <el-button type="primary" @click="setRule">设置</el-button>
+				  </el-form-item>
+				</el-form>
+  			</el-col>
+		</el-row>
+	</div>
+</body>
+
+<script>
+	new Vue({
+		el : '#app',
+		data : function() {
+			return {
+		        form: {
+		          rule: ''
+		        },
+		        rules: {
+		          rule: [
+		            { required: false, message: '请填写规则', trigger: 'blur' }
+		          ]
+		        }
+		    };
+		},
+		methods: {
+			setRule: function(){
+				var _this = this;
+				$.ajax("./rule/set", {
+				    data : JSON.stringify(_this.form),
+				    contentType : 'application/json',
+				    type: 'POST',
+				    success: function(data){
+				    	_this.$notify.success("保存成功！")
+				    },
+				    error: function(){
+				    	_this.$notify.error("保存失败！")
+				    }
+				 });
+			},
+			getRule: function(){
+				var _this = this;
+				$.ajax("./rule/get", {
+				    contentType : 'application/json',
+				    dataType : 'json',
+				    success: function(data){
+				    	_this.$notify.success("查询成功！")
+				    	_this.form = data;
+				    }
+				});
+			}
+		},
+		mounted: function(){
+			this.getRule();
+		}
+	})
+</script>
+</html>

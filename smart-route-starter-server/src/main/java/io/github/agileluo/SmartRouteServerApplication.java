@@ -4,9 +4,9 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class SmartRuleApplication {
+public class SmartRouteServerApplication {
 
 	public static void main(String[] args) {
-		SpringApplication.run(SmartRuleApplication.class, args);
+		SpringApplication.run(SmartRouteServerApplication.class, args);
 	}
 }

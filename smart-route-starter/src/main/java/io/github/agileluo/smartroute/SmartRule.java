@@ -2,6 +2,7 @@ package io.github.agileluo.smartroute;
 
 import java.io.IOException;
 import java.io.StringReader;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Properties;
@@ -158,6 +159,10 @@ public class SmartRule extends ZoneAvoidanceRule implements InitializingBean {
 	}
 
 	private void loadRouteFromZk(ChildData data) throws IOException {
+		if(data == null){
+			routeChain.resetRoutes(new ArrayList<>());
+			return;
+		}
 		Properties p = loadRemoteProperties(data.getData());
 		RouteParserChain rp = new RouteParserChain();
 		List<Route> routes = rp.parse(p);
