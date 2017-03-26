@@ -10,6 +10,11 @@ import com.netflix.loadbalancer.Server;
 
 import io.github.agileluo.smartroute.route.Route;
 
+/**
+ * 动态路由
+ * @author marlon.luo
+ *
+ */
 public class RouteChain {
 	private volatile Set<Route> routes = new HashSet<>();
 	/**

@@ -6,35 +6,21 @@ package io.github.agileluo.smartroute.vo;
  *
  */
 public class SmartContext {
-	//事务id
-	private String transId;
-	//用户id
-	private String userId;
-	//调试机器
-	private String debugHost;
+	private String clientId;
+	private String clientIp;
 	
-	public String getTransId() {
-		return transId;
+	public String getClientId() {
+		return clientId;
 	}
-	public void setTransId(String transId) {
-		this.transId = transId;
+	public SmartContext setClientId(String clientId) {
+		this.clientId = clientId;
+		return this;
 	}
-	public String getUserId() {
-		return userId;
+	public String getClientIp() {
+		return clientIp;
 	}
-	public void setUserId(String userId) {
-		this.userId = userId;
-	}
-	public String getDebugHost() {
-		return debugHost;
-	}
-	public void setDebugHost(String debugHost) {
-		this.debugHost = debugHost;
-	}
-	public SmartContext(String transId, String userId, String debugHost) {
-		super();
-		this.transId = transId;
-		this.userId = userId;
-		this.debugHost = debugHost;
+	public SmartContext setClientIp(String clientIp) {
+		this.clientIp = clientIp;
+		return this;
 	}
 }

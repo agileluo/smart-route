@@ -2,6 +2,9 @@ package io.github.agileluo.smartroute;
 
 import java.util.List;
 
+import org.apache.commons.collections.CollectionUtils;
+import org.bouncycastle.crypto.tls.ServerSRPParams;
+
 import com.netflix.loadbalancer.Server;
 
 /**
@@ -21,6 +24,15 @@ public class RouteRequest {
 	//服务Id
 	private String serviceId;
 	
+	public RouteRequest(String clientId, String clientIp, List<Server> servers) {
+		super();
+		this.clientId = clientId;
+		this.clientIp = clientIp;
+		this.servers = servers;
+		if(CollectionUtils.isNotEmpty(servers)){
+			this.serviceId = servers.get(0).getMetaInfo().getAppName();
+		}
+	}
 	public String getClientIp() {
 		return clientIp;
 	}

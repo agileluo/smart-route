@@ -1,22 +1,23 @@
 package io.github.agileluo.smartroute.route;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.collections.Predicate;
-
 import com.netflix.loadbalancer.Server;
 
 import io.github.agileluo.smartroute.RouteRequest;
 import io.github.agileluo.smartroute.constant.SmartRuleConstant;
+import io.github.agileluo.smartroute.context.IpUtil;
 
 /**
  * 调试路由
+ * <p>
+ * 1,规则内的请求，导流至规则内节点<br>
+ * 2,规则外的请求，不会导流至规则内节点， 以达到远程调试代码效果<br>
+ * <p> 
  * 
  * @author marlon.luo
  *
@@ -45,6 +46,8 @@ public class DebugRoute implements Route {
 		if(clientId != null && clientId.equals(req.getClientId())){
 			isDebug = true;
 		}else if(clientIp != null && clientIp.equals(req.getClientIp())){
+			isDebug = true;
+		}else if(IpUtil.isAllLocalIp(clientIp, req.getClientIp())){
 			isDebug = true;
 		}
 		List<Server> newServer = new ArrayList<>();
