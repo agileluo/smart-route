@@ -1,5 +1,9 @@
 package io.github.agileluo.rest;
 
+import java.net.InetAddress;
+
+import javax.servlet.http.HttpServletRequest;
+
 import org.apache.commons.lang.StringUtils;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.zookeeper.KeeperException.NoNodeException;
@@ -12,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import io.github.agileluo.smartroute.constant.SmartRuleConstant;
+import io.github.agileluo.smartroute.context.IpUtil;
 import io.github.agileluo.vo.Rule;
 
 @RestController
@@ -39,6 +44,10 @@ public class RuleController {
 			client.create().creatingParentContainersIfNeeded().forPath(SmartRuleConstant.CONFIG_PATH, rule.getRule().getBytes(ENCODE));
 		}
 		return true;
+	}
+	@RequestMapping("/getip")
+	public String getIp(HttpServletRequest req){
+		return req.getRemoteHost();
 	}
 	private String getRule(){
 		try {

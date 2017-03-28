@@ -13,7 +13,10 @@
 		<el-row>
   			<el-col :span="20" :offset="2">
   				<el-form :model="form" :rules="rules" ref="form" label-width="100px" class="demo-form">
-				  <el-form-item label="规则设置" prop="rule">
+				  <el-form-item label="您的IP:">
+				    <el-input type="input" v-model="ip" :disabled="true" autosize></el-input>
+				  </el-form-item>
+				  <el-form-item label="规则设置:" prop="rule">
 				    <el-input type="textarea" :rows="20" v-model="form.rule"></el-input>
 				  </el-form-item>
 				  <el-form-item>
@@ -33,6 +36,7 @@
 		        form: {
 		          rule: ''
 		        },
+		        ip: '',
 		        rules: {
 		          rule: [
 		            { required: false, message: '请填写规则', trigger: 'blur' }
@@ -65,9 +69,19 @@
 				    	_this.form = data;
 				    }
 				});
+			},
+			getIp: function(){
+				var _this = this;
+				$.ajax("./rule/getip", {
+				    contentType : 'application/json',
+				    success: function(ip){
+				    	_this.ip = ip;
+				    }
+				});
 			}
 		},
 		mounted: function(){
+			this.getIp();
 			this.getRule();
 		}
 	})
