@@ -3,6 +3,7 @@ package io.github.agileluo.smartroute;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Properties;
@@ -114,6 +115,7 @@ public class SmartRule extends ZoneAvoidanceRule implements InitializingBean {
 	public Server choose(Object key) {
 		ILoadBalancer lb = getLoadBalancer();
 		List<Server> servers = lb.getAllServers();
+		System.out.println(Arrays.toString(servers.toArray()));
 		// 开发调试支持
 		if ("true".equals(env.getProperty("debug.local"))) {
 			for (Server s : servers) {
