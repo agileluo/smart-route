@@ -33,6 +33,9 @@ public class ContextFilter implements Filter {
 			ContextUtil.initContext(context);
 		}else{
 			String clientIp = request.getRemoteHost();
+			if(IpUtil.isLocalIp(clientIp)){
+				clientIp = IpUtil.getLocalRemoteIp();
+			}
 			String clientId = request.getHeader(ContextUtil.CLIENT_ID);
 			ContextUtil.initContext(new SmartContext().setClientIp(clientIp).setClientId(clientId));
 		}

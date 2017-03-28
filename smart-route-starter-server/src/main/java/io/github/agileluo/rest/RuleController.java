@@ -47,7 +47,11 @@ public class RuleController {
 	}
 	@RequestMapping("/getip")
 	public String getIp(HttpServletRequest req){
-		return req.getRemoteHost();
+		String ip = req.getRemoteHost();
+		if(IpUtil.isLocalIp(ip)){
+			ip = IpUtil.getLocalRemoteIp();
+		}
+		return ip;
 	}
 	private String getRule(){
 		try {
