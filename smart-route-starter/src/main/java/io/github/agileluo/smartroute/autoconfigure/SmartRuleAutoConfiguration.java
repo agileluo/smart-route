@@ -3,6 +3,7 @@ package io.github.agileluo.smartroute.autoconfigure;
 import javax.servlet.Filter;
 
 import org.springframework.boot.autoconfigure.AutoConfigureBefore;
+import org.springframework.cloud.netflix.feign.FeignClient;
 import org.springframework.cloud.netflix.ribbon.PropertiesFactory;
 import org.springframework.cloud.netflix.ribbon.RibbonAutoConfiguration;
 import org.springframework.context.annotation.Bean;
